@@ -3,21 +3,973 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Card Hunter 🎴 — Rare Baseball Card Finder</title>
+  <title>Card Hunter 🃏🔍 ─ Rare Baseball Card Finder</title>
+  <style>
+    :root {
+      --bg: #09111f;
+      --surface: #0f1c2e;
+      --card: #152035;
+      --border: #1e3050;
+      --gold: #f5c542;
+      --gold2: #e8a020;
+      --red: #e03c3c;
+      --blue: #4a9eff;
+      --green: #3ecf8e;
+      --purple: #a78bfa;
+      --text: #e8edf5;
+      --muted: #6b7e96;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+    /* ──── HEADER ──── */
+    header {
+      background: linear-gradient(135deg, #0a1625 0%, #150820 100%);
+      border-bottom: 2px solid var(--gold);
+      padding: 18px 28px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    }
+    .logo { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 50px; height: 50px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; box-shadow: 0 0 24px rgba(245,197,66,.4);
+    }
+    .logo-text h1 { font-size: 24px; font-weight: 900; color: var(--gold); letter-spacing: -0.5px; }
+    .logo-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .h-badge {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--muted);
+    }
+    .h-badge b { color: var(--gold); }
+
+    /* ──── HUNT BAR ──── */
+    .hunt-section {
+      background: linear-gradient(180deg, #0f1c2e 0%, #0d1826 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 28px 20px;
+    }
+    .hunt-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .hunt-row { display: flex; gap: 10px; max-width: 860px; }
+    .hunt-input-wrap { flex: 1; position: relative; }
+    .hunt-input-wrap input {
+      width: 100%; background: var(--card);
+      border: 2px solid var(--border); border-radius: 14px;
+      padding: 15px 18px 15px 50px; color: var(--text); font-size: 16px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .hunt-input-wrap input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,197,66,.12); }
+    .hunt-input-wrap input::placeholder { color: var(--muted); }
+    .hunt-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; }
+    .hunt-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #09111f; border: none; border-radius: 14px;
+      padding: 15px 28px; font-weight: 900; font-size: 15px; cursor: pointer;
+      transition: transform .15s, box-shadow .2s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hunt-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,197,66,.4); }
+    .hunt-btn:active { transform: translateY(0); }
+
+    /* platform badges under search */
+    .platform-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; max-width: 860px; }
+    .plat-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 5px 12px; font-size: 12px; color: var(--muted); cursor: pointer;
+      transition: all .15s;
+    }
+    .plat-chip:hover { border-color: currentColor; }
+    .plat-chip.ebay:hover { color: #e53238; }
+    .plat-chip.comc:hover { color: #1a6fc4; }
+    .plat-chip.goldin:hover { color: #c69b30; }
+    .plat-chip.pwcc:hover { color: #3ecf8e; }
+    .plat-chip.beckett:hover { color: #a78bfa; }
+    .plat-chip.sold:hover { color: var(--red); }
+    .plat-chip.psa:hover { color: var(--blue); }
+    .plat-chip.myslabs:hover { color: #ff7043; }
+    .plat-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* ──── LAUNCH RESULT ──── */
+    .launch-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--green); color: #09111f; border-radius: 14px;
+      padding: 12px 24px; font-weight: 800; font-size: 14px;
+      box-shadow: 0 8px 32px rgba(62,207,142,.35); z-index: 200;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none; white-space: nowrap;
+    }
+    .launch-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ──── MAIN ──── */
+    .main { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 240px); }
+
+    /* ──── SIDEBAR ──── */
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 14px; }
+    .sb-title { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding: 0 6px; }
+    .sb-section { margin-bottom: 26px; }
+    .sb-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .15s; margin-bottom: 2px; font-size: 13px;
+    }
+    .sb-item:hover { background: var(--card); }
+    .sb-item.active { background: rgba(245,197,66,.1); color: var(--gold); }
+    .sb-count {
+      background: var(--card); color: var(--muted);
+      font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    }
+    .active .sb-count { background: rgba(245,197,66,.15); color: var(--gold); }
+
+    .sb-player { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: background .15s; }
+    .sb-player:hover { background: var(--card); }
+    .sb-player .hunt-all-btn {
+      margin-left: auto; background: rgba(245,197,66,.12); color: var(--gold);
+      border: none; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 700;
+      cursor: pointer; opacity: 0; transition: opacity .15s;
+    }
+    .sb-player:hover .hunt-all-btn { opacity: 1; }
+
+    /* ──── CONTENT ──── */
+    .content { padding: 24px; }
+    .content-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+    .content-title { font-size: 16px; font-weight: 800; }
+    .content-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .sort-sel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; color: var(--text); font-size: 13px; cursor: pointer; outline: none;
+    }
+
+    /* filter pills */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .f-pill {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all .15s; color: var(--muted);
+    }
+    .f-pill:hover, .f-pill.on { border-color: var(--gold); color: var(--gold); background: rgba(245,197,66,.08); }
+
+    /* ──── CARD GRID ──── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+
+    /* ──── CARD ──── */
+    .bc {
+      background: var(--card); border-radius: 16px; border: 1px solid var(--border);
+      overflow: hidden; transition: transform .2s, box-shadow .2s, border-color .2s; cursor: pointer;
+    }
+    .bc:hover { transform: translateY(-4px); box-shadow: 0 14px 44px rgba(0,0,0,.6); border-color: var(--gold); }
+    .bc.hot { border-color: rgba(224,60,60,.4); }
+    .bc.hot:hover { border-color: var(--red); box-shadow: 0 14px 44px rgba(224,60,60,.15); }
+
+    .bc-banner {
+      height: 110px; display: flex; align-items: center; justify-content: center;
+      font-size: 50px; position: relative; overflow: hidden;
+    }
+    .bc-badges { position: absolute; top: 8px; left: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .badge {
+      padding: 2px 7px; border-radius: 5px; font-size: 9px; font-weight: 800;
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .b-rc   { background: rgba(74,158,255,.2); color: var(--blue); border: 1px solid rgba(74,158,255,.4); }
+    .b-psa  { background: rgba(62,207,142,.2); color: var(--green); border: 1px solid rgba(62,207,142,.4); }
+    .b-auto { background: rgba(167,139,250,.2); color: var(--purple); border: 1px solid rgba(167,139,250,.4); }
+    .b-1of1 { background: rgba(245,197,66,.2); color: var(--gold); border: 1px solid rgba(245,197,66,.5); }
+    .b-hot  { background: rgba(224,60,60,.2); color: var(--red); border: 1px solid rgba(224,60,60,.4); }
+    .b-vin  { background: rgba(245,197,66,.12); color: #d4a030; border: 1px solid rgba(245,197,66,.3); }
+
+    .rarity-tag {
+      position: absolute; top: 8px; right: 8px; padding: 3px 9px;
+      border-radius: 20px; font-size: 9px; font-weight: 900; letter-spacing: .3px;
+    }
+    .r-legendary { background: linear-gradient(135deg,#ffd700,#ff8c00); color: #000; }
+    .r-ultra { background: linear-gradient(135deg,#a78bfa,#7c3aed); color: #fff; }
+    .r-rare { background: linear-gradient(135deg,var(--blue),#1e5fa8); color: #fff; }
+    .r-uncommon { background: rgba(62,207,142,.2); color: var(--green); border: 1px solid var(--green); }
+
+    .bc-body { padding: 14px 16px; }
+    .bc-player { font-size: 16px; font-weight: 800; margin-bottom: 1px; }
+    .bc-info { font-size: 11px; color: var(--muted); margin-bottom: 11px; }
+    .bc-price-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 11px; }
+    .bc-price { font-size: 22px; font-weight: 900; color: var(--gold); }
+    .bc-range { font-size: 10px; color: var(--muted); text-align: right; line-height: 1.5; }
+    .bc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bc-tag {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 7px; font-size: 10px; color: var(--muted);
+    }
+    .bc-actions { display: flex; gap: 7px; }
+    .bc-btn {
+      flex: 1; padding: 9px 10px; border-radius: 9px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+      text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .bc-hunt { background: linear-gradient(135deg,var(--gold),var(--gold2)); color: #09111f; }
+    .bc-hunt:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .bc-detail { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .bc-detail:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ──── MODAL ──── */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      z-index: 100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+      max-width: 600px; width: 100%; overflow: hidden;
+      animation: mIn .22s ease;
+    }
+    @keyframes mIn { from { transform: scale(.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .m-head { padding: 24px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    .m-close {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .m-body { padding: 18px 24px 24px; }
+    .m-name { font-size: 28px; font-weight: 900; }
+    .m-sub { font-size: 13px; color: var(--muted); margin: 4px 0 4px; }
+    .m-note { font-size: 12px; color: #8899aa; margin-bottom: 16px; line-height: 1.5; font-style: italic; }
+    .m-price { font-size: 38px; font-weight: 900; color: var(--gold); }
+    .m-range-note { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .m-field { background: var(--card); border-radius: 10px; padding: 11px 14px; }
+    .m-field-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+    .m-field-val { font-size: 14px; font-weight: 700; }
+
+    /* ──── HUNT ALL BUTTON ──── */
+    .hunt-all-wrap { margin-bottom: 18px; }
+    .hunt-all-big {
+      width: 100%; padding: 15px; border-radius: 13px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #09111f; border: none; font-size: 15px; font-weight: 900;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: transform .15s, box-shadow .2s;
+    }
+    .hunt-all-big:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,197,66,.4); }
+    .hunt-all-big span { font-size: 12px; font-weight: 600; opacity: .75; }
+
+    /* marketplace grid */
+    .m-links { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .m-link {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 11px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all .15s; border: 1px solid transparent;
+    }
+    .m-link:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    .ml-ebay { background: linear-gradient(135deg,#e53238,#b02828); color: #fff; }
+    .ml-sold { background: linear-gradient(135deg,#b01010,#7a0a0a); color: #fff; }
+    .ml-comc { background: linear-gradient(135deg,#1a6fc4,#0d4f9e); color: #fff; }
+    .ml-goldin { background: linear-gradient(135deg,#c69b30,#9a7520); color: #fff; }
+    .ml-pwcc { background: linear-gradient(135deg,#2d6a4f,#1b4332); color: #fff; }
+    .ml-beckett { background: var(--card); color: var(--blue); border-color: var(--blue); }
+    .ml-psa { background: var(--card); color: var(--purple); border-color: var(--purple); }
+    .ml-myslabs { background: var(--card); color: #ff7043; border-color: #ff7043; }
+    .ml-sportslots { background: var(--card); color: var(--green); border-color: var(--green); }
+
+    /* ──── SCROLL TO TOP ──── */
+    .scr-top {
+      position: fixed; bottom: 24px; right: 24px; width: 42px; height: 42px;
+      background: var(--gold); color: #09111f; border: none; border-radius: 11px;
+      font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(245,197,66,.4); z-index: 50;
+    }
+    .scr-top.vis { display: flex; }
+
+    /* ──── EMPTY STATE ──── */
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: .5; }
+    .empty-h { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-p { font-size: 14px; line-height: 1.6; }
+
+    @media(max-width:768px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 14px; }
+      .hunt-row { flex-direction: column; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-<h1 style="color: #f5c542">Card Hunter - Rare Baseball Card Finder</h1>
-<p style="color: #e8edf5">A complete rare baseball card marketplace tracker with:</p>
-<ul style="color: #e8edf5">
-<li>47+ legendary and modern cards</li>
-<li>Real-time pricing from 5 major marketplaces</li>
-<li>Advanced filtering by era, rarity, and grade</li>
-<li>Historical price tracking</li>
-<li>Player statistics and card grading</li>
-</ul>
-<p style="color: #8899aa">Shoutout @nlugert - Full interactive version loading...</p>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🃏</div>
+    <div class="logo-text">
+      <h1>Card Hunter</h1>
+      <p>Rare Card Finder</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <div class="h-badge"><b>8</b> Marketplaces</div>
+    <div class="h-badge"><b>Live</b> Data</div>
+    <div class="h-badge"><b>Quick</b> Search</div>
+  </div>
+</header>
+
+<div class="hunt-section">
+  <div class="hunt-label">Find Your Card</div>
+  <div class="hunt-row">
+    <div class="hunt-input-wrap">
+      <div class="hunt-icon">🔍</div>
+      <input type="text" id="searchInput" placeholder="Player name or card details..." />
+    </div>
+    <button class="hunt-btn" id="huntBtn">
+      <span>Hunt</span>
+    </button>
+  </div>
+  <div class="platform-row" id="platformRow"></div>
+</div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sb-title">Marketplaces</div>
+    <div class="sb-section" id="marketplaceList"></div>
+    
+    <div class="sb-section">
+      <div class="sb-item" onclick="launchHuntAll()">
+        <span>Hunt All Markets</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="content-top">
+      <div>
+        <div class="content-title" id="contentTitle">Baseball Cards</div>
+        <div class="content-sub" id="contentSub">Showing all available cards</div>
+      </div>
+      <select class="sort-sel" id="sortSelect">
+        <option value="newest">Newest</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+      </select>
+    </div>
+
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="grid" id="cardGrid"></div>
+    <div class="empty" id="emptyState" style="display:none;">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-h">No Cards Found</div>
+      <div class="empty-p">Try adjusting your search or filters</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="m-head">
+      <h2 id="modalName" class="m-name"></h2>
+      <button class="m-close" onclick="document.getElementById('modal').classList.remove('open');">×</button>
+    </div>
+    <div class="m-body">
+      <div id="modalSub" class="m-sub"></div>
+      <div id="modalNote" class="m-note"></div>
+      <div class="m-price" id="modalPrice"></div>
+      <div class="m-range-note" id="modalRange"></div>
+      <div class="m-grid">
+        <div class="m-field">
+          <div class="m-field-label">Grade</div>
+          <div class="m-field-val" id="modalGrade">N/A</div>
+        </div>
+        <div class="m-field">
+          <div class="m-field-label">Year</div>
+          <div class="m-field-val" id="modalYear">N/A</div>
+        </div>
+      </div>
+      <div class="hunt-all-wrap">
+        <button class="hunt-all-big" id="modalHuntBtn">
+          🎯 Hunt Across Markets
+          <span>(opens in new tabs)</span>
+        </button>
+      </div>
+      <div class="m-links" id="marketLinks"></div>
+    </div>
+  </div>
+</div>
+
+<button class="scr-top" id="scrTop" onclick="window.scrollTo({top:0,behavior:'smooth'});">↑</button>
+<div class="launch-toast" id="launchToast">Launching searches...</div>
+
 <script>
-console.log('Card Hunter loaded');
-</script>
-</body>
-</html>
+  // SAMPLE CARD DATA
+  const CARDS = [
+    { player: "Mickey Mantle", team: "Yankees", year: 1952, grade: "PSA 8", price: "$2.5M", range: "$2.2M - $3.0M", badges: ["1of1", "rc"], rarity: "legendary", hot: true, note: "One of the most valuable cards in existence" },
+    { player: "Willie Mays", team: "Giants", year: 1951, grade: "PSA 9", price: "$1.8M", range: "$1.5M - $2.0M", badges: ["ultra", "auto"], rarity: "ultra", note: "Exceptional grade for its age" },
+    { player: "Babe Ruth", team: "Red Sox", year: 1914, grade: "PWCC", price: "$750K", range: "$600K - $850K", badges: ["hot"], rarity: "legendary", hot: true },
+    { player: "Ted Williams", team: "Red Sox", year: 1939, grade: "CGC 6", price: "$125K", range: "$100K - $150K", badges: [], rarity: "rare" },
+    { player: "Stan The Man", team: "Cardinals", year: 1951, grade: "PSA 7", price: "$85K", range: "$75K - $95K", badges: ["psa"], rarity: "rare" },
+    { player: "Joe DiMaggio", team: "Yankees", year: 1936, grade: "VG", price: "$45K", range: "$38K - $52K", badges: ["vin"], rarity: "uncommon" },
+  ];
+
+  const PLATFORMS = [
+    { id: "ebay", name: "eBay", url: "ebay.com" },
+    { id: "comc", name: "COMC", url: "comc.com" },
+    { id: "goldin", name: "Goldin", url: "goldinauctions.com" },
+    { id: "pwcc", name: "PWCC", url: "pwccauctions.com" },
+    { id: "beckett", name: "Beckett", url: "beckett.com" },
+    { id: "psa", name: "PSA", url: "psacard.com" },
+    { id: "sold", name: "Recently Sold", url: "" },
+    { id: "myslabs", name: "MySlabs", url: "myslabs.com" },
+  ];
+
+  // RENDER MARKETPLACE LIST
+  function renderMarketplaces() {
+    const html = PLATFORMS.map(p => `
+      <div class="sb-item" onclick="filterByPlatform('${p.id}')">
+        <span>${p.name}</span>
+        <div class="sb-count" id="count-${p.id}">0</div>
+      </div>
+    `).join("");
+    document.getElementById("marketplaceList").innerHTML = html;
+  }
+
+  // RENDER FILTER PILLS
+  function renderFilters() {
+    const badges = ["1of1", "rc", "hot", "auto", "psa"];
+    const html = badges.map(b => `
+      <div class="f-pill" onclick="toggleFilter('${b}')" id="f-${b}">${b.toUpperCase()}</div>
+    `).join("");
+    document.getElementById("filterBar").innerHTML = html;
+  }
+
+  // RENDER CARDS
+  function renderCards(cards = CARDS) {
+    if (cards.length === 0) {
+      document.getElementById("cardGrid").innerHTML = "";
+      document.getElementById("emptyState").style.display = "block";
+      return;
+    }
+    document.getElementById("emptyState").style.display = "none";
+
+    const html = cards.map(card => `
+      <div class="bc ${card.hot ? "hot" : ""}" onclick="openModal(${CARDS.indexOf(card)})">
+        <div class="bc-banner">${card.year}</div>
+        <div class="bc-badges">
+          ${card.badges.map(b => `<span class="badge b-${b}">${b}</span>`).join("")}
+        </div>
+        <div class="rarity-tag r-${card.rarity}">${card.rarity}</div>
+        <div class="bc-body">
+          <div class="bc-player">${card.player}</div>
+          <div class="bc-info">${card.team} • ${card.year}</div>
+          <div class="bc-price-row">
+            <div class="bc-price">${card.price}</div>
+            <div class="bc-range">${card.range}</div>
+          </div>
+          <div class="bc-tags">
+            <div class="bc-tag">${card.grade}</div>
+          </div>
+          <div class="bc-actions">
+            <button class="bc-btn bc-hunt">🎯 Hunt</button>
+            <button class="bc-btn bc-detail">📋 Details</button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    document.getElementById("cardGrid").innerHTML = html;
+  }
+
+  // OPEN MODAL
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Card Hunter 🃏🔍 ─ Rare Baseball Card Finder</title>
+  <style>
+    :root {
+      --bg: #09111f;
+      --surface: #0f1c2e;
+      --card: #152035;
+      --border: #1e3050;
+      --gold: #f5c542;
+      --gold2: #e8a020;
+      --red: #e03c3c;
+      --blue: #4a9eff;
+      --green: #3ecf8e;
+      --purple: #a78bfa;
+      --text: #e8edf5;
+      --muted: #6b7e96;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+    /* ──── HEADER ──── */
+    header {
+      background: linear-gradient(135deg, #0a1625 0%, #150820 100%);
+      border-bottom: 2px solid var(--gold);
+      padding: 18px 28px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+    }
+    .logo { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 50px; height: 50px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; box-shadow: 0 0 24px rgba(245,197,66,.4);
+    }
+    .logo-text h1 { font-size: 24px; font-weight: 900; color: var(--gold); letter-spacing: -0.5px; }
+    .logo-text p { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .header-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .h-badge {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--muted);
+    }
+    .h-badge b { color: var(--gold); }
+
+    /* ──── HUNT BAR ──── */
+    .hunt-section {
+      background: linear-gradient(180deg, #0f1c2e 0%, #0d1826 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 28px 20px;
+    }
+    .hunt-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .hunt-row { display: flex; gap: 10px; max-width: 860px; }
+    .hunt-input-wrap { flex: 1; position: relative; }
+    .hunt-input-wrap input {
+      width: 100%; background: var(--card);
+      border: 2px solid var(--border); border-radius: 14px;
+      padding: 15px 18px 15px 50px; color: var(--text); font-size: 16px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .hunt-input-wrap input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(245,197,66,.12); }
+    .hunt-input-wrap input::placeholder { color: var(--muted); }
+    .hunt-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; }
+    .hunt-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #09111f; border: none; border-radius: 14px;
+      padding: 15px 28px; font-weight: 900; font-size: 15px; cursor: pointer;
+      transition: transform .15s, box-shadow .2s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hunt-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,197,66,.4); }
+    .hunt-btn:active { transform: translateY(0); }
+
+    /* platform badges under search */
+    .platform-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; max-width: 860px; }
+    .plat-chip {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 5px 12px; font-size: 12px; color: var(--muted); cursor: pointer;
+      transition: all .15s;
+    }
+    .plat-chip:hover { border-color: currentColor; }
+    .plat-chip.ebay:hover { color: #e53238; }
+    .plat-chip.comc:hover { color: #1a6fc4; }
+    .plat-chip.goldin:hover { color: #c69b30; }
+    .plat-chip.pwcc:hover { color: #3ecf8e; }
+    .plat-chip.beckett:hover { color: #a78bfa; }
+    .plat-chip.sold:hover { color: var(--red); }
+    .plat-chip.psa:hover { color: var(--blue); }
+    .plat-chip.myslabs:hover { color: #ff7043; }
+    .plat-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* ──── LAUNCH RESULT ──── */
+    .launch-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--green); color: #09111f; border-radius: 14px;
+      padding: 12px 24px; font-weight: 800; font-size: 14px;
+      box-shadow: 0 8px 32px rgba(62,207,142,.35); z-index: 200;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none; white-space: nowrap;
+    }
+    .launch-toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ──── MAIN ──── */
+    .main { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 240px); }
+
+    /* ──── SIDEBAR ──── */
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 14px; }
+    .sb-title { font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; padding: 0 6px; }
+    .sb-section { margin-bottom: 26px; }
+    .sb-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .15s; margin-bottom: 2px; font-size: 13px;
+    }
+    .sb-item:hover { background: var(--card); }
+    .sb-item.active { background: rgba(245,197,66,.1); color: var(--gold); }
+    .sb-count {
+      background: var(--card); color: var(--muted);
+      font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    }
+    .active .sb-count { background: rgba(245,197,66,.15); color: var(--gold); }
+
+    .sb-player { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: background .15s; }
+    .sb-player:hover { background: var(--card); }
+    .sb-player .hunt-all-btn {
+      margin-left: auto; background: rgba(245,197,66,.12); color: var(--gold);
+      border: none; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 700;
+      cursor: pointer; opacity: 0; transition: opacity .15s;
+    }
+    .sb-player:hover .hunt-all-btn { opacity: 1; }
+
+    /* ──── CONTENT ──── */
+    .content { padding: 24px; }
+    .content-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+    .content-title { font-size: 16px; font-weight: 800; }
+    .content-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .sort-sel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 12px; color: var(--text); font-size: 13px; cursor: pointer; outline: none;
+    }
+
+    /* filter pills */
+    .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+    .f-pill {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all .15s; color: var(--muted);
+    }
+    .f-pill:hover, .f-pill.on { border-color: var(--gold); color: var(--gold); background: rgba(245,197,66,.08); }
+
+    /* ──── CARD GRID ──── */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+
+    /* ──── CARD ──── */
+    .bc {
+      background: var(--card); border-radius: 16px; border: 1px solid var(--border);
+      overflow: hidden; transition: transform .2s, box-shadow .2s, border-color .2s; cursor: pointer;
+    }
+    .bc:hover { transform: translateY(-4px); box-shadow: 0 14px 44px rgba(0,0,0,.6); border-color: var(--gold); }
+    .bc.hot { border-color: rgba(224,60,60,.4); }
+    .bc.hot:hover { border-color: var(--red); box-shadow: 0 14px 44px rgba(224,60,60,.15); }
+
+    .bc-banner {
+      height: 110px; display: flex; align-items: center; justify-content: center;
+      font-size: 50px; position: relative; overflow: hidden;
+    }
+    .bc-badges { position: absolute; top: 8px; left: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .badge {
+      padding: 2px 7px; border-radius: 5px; font-size: 9px; font-weight: 800;
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .b-rc   { background: rgba(74,158,255,.2); color: var(--blue); border: 1px solid rgba(74,158,255,.4); }
+    .b-psa  { background: rgba(62,207,142,.2); color: var(--green); border: 1px solid rgba(62,207,142,.4); }
+    .b-auto { background: rgba(167,139,250,.2); color: var(--purple); border: 1px solid rgba(167,139,250,.4); }
+    .b-1of1 { background: rgba(245,197,66,.2); color: var(--gold); border: 1px solid rgba(245,197,66,.5); }
+    .b-hot  { background: rgba(224,60,60,.2); color: var(--red); border: 1px solid rgba(224,60,60,.4); }
+    .b-vin  { background: rgba(245,197,66,.12); color: #d4a030; border: 1px solid rgba(245,197,66,.3); }
+
+    .rarity-tag {
+      position: absolute; top: 8px; right: 8px; padding: 3px 9px;
+      border-radius: 20px; font-size: 9px; font-weight: 900; letter-spacing: .3px;
+    }
+    .r-legendary { background: linear-gradient(135deg,#ffd700,#ff8c00); color: #000; }
+    .r-ultra { background: linear-gradient(135deg,#a78bfa,#7c3aed); color: #fff; }
+    .r-rare { background: linear-gradient(135deg,var(--blue),#1e5fa8); color: #fff; }
+    .r-uncommon { background: rgba(62,207,142,.2); color: var(--green); border: 1px solid var(--green); }
+
+    .bc-body { padding: 14px 16px; }
+    .bc-player { font-size: 16px; font-weight: 800; margin-bottom: 1px; }
+    .bc-info { font-size: 11px; color: var(--muted); margin-bottom: 11px; }
+    .bc-price-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 11px; }
+    .bc-price { font-size: 22px; font-weight: 900; color: var(--gold); }
+    .bc-range { font-size: 10px; color: var(--muted); text-align: right; line-height: 1.5; }
+    .bc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .bc-tag {
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px 7px; font-size: 10px; color: var(--muted);
+    }
+    .bc-actions { display: flex; gap: 7px; }
+    .bc-btn {
+      flex: 1; padding: 9px 10px; border-radius: 9px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s;
+      text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .bc-hunt { background: linear-gradient(135deg,var(--gold),var(--gold2)); color: #09111f; }
+    .bc-hunt:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .bc-detail { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .bc-detail:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ──── MODAL ──── */
+    .overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      z-index: 100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+      max-width: 600px; width: 100%; overflow: hidden;
+      animation: mIn .22s ease;
+    }
+    @keyframes mIn { from { transform: scale(.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .m-head { padding: 24px 24px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    .m-close {
+      background: var(--card); border: 1px solid var(--border); color: var(--text);
+      width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .m-body { padding: 18px 24px 24px; }
+    .m-name { font-size: 28px; font-weight: 900; }
+    .m-sub { font-size: 13px; color: var(--muted); margin: 4px 0 4px; }
+    .m-note { font-size: 12px; color: #8899aa; margin-bottom: 16px; line-height: 1.5; font-style: italic; }
+    .m-price { font-size: 38px; font-weight: 900; color: var(--gold); }
+    .m-range-note { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+    .m-field { background: var(--card); border-radius: 10px; padding: 11px 14px; }
+    .m-field-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+    .m-field-val { font-size: 14px; font-weight: 700; }
+
+    /* ──── HUNT ALL BUTTON ──── */
+    .hunt-all-wrap { margin-bottom: 18px; }
+    .hunt-all-big {
+      width: 100%; padding: 15px; border-radius: 13px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #09111f; border: none; font-size: 15px; font-weight: 900;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: transform .15s, box-shadow .2s;
+    }
+    .hunt-all-big:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,197,66,.4); }
+    .hunt-all-big span { font-size: 12px; font-weight: 600; opacity: .75; }
+
+    /* marketplace grid */
+    .m-links { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .m-link {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 11px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      text-decoration: none; transition: all .15s; border: 1px solid transparent;
+    }
+    .m-link:hover { transform: translateY(-2px); filter: brightness(1.1); }
+    .ml-ebay { background: linear-gradient(135deg,#e53238,#b02828); color: #fff; }
+    .ml-sold { background: linear-gradient(135deg,#b01010,#7a0a0a); color: #fff; }
+    .ml-comc { background: linear-gradient(135deg,#1a6fc4,#0d4f9e); color: #fff; }
+    .ml-goldin { background: linear-gradient(135deg,#c69b30,#9a7520); color: #fff; }
+    .ml-pwcc { background: linear-gradient(135deg,#2d6a4f,#1b4332); color: #fff; }
+    .ml-beckett { background: var(--card); color: var(--blue); border-color: var(--blue); }
+    .ml-psa { background: var(--card); color: var(--purple); border-color: var(--purple); }
+    .ml-myslabs { background: var(--card); color: #ff7043; border-color: #ff7043; }
+    .ml-sportslots { background: var(--card); color: var(--green); border-color: var(--green); }
+
+    /* ──── SCROLL TO TOP ──── */
+    .scr-top {
+      position: fixed; bottom: 24px; right: 24px; width: 42px; height: 42px;
+      background: var(--gold); color: #09111f; border: none; border-radius: 11px;
+      font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(245,197,66,.4); z-index: 50;
+    }
+    .scr-top.vis { display: flex; }
+
+    /* ──── EMPTY STATE ──── */
+    .empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: .5; }
+    .empty-h { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-p { font-size: 14px; line-height: 1.6; }
+
+    @media(max-width:768px) {
+      .main { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 14px; }
+      .hunt-row { flex-direction: column; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🃏</div>
+    <div class="logo-text">
+      <h1>Card Hunter</h1>
+      <p>Rare Card Finder</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <div class="h-badge"><b>8</b> Marketplaces</div>
+    <div class="h-badge"><b>Live</b> Data</div>
+    <div class="h-badge"><b>Quick</b> Search</div>
+  </div>
+</header>
+
+<div class="hunt-section">
+  <div class="hunt-label">Find Your Card</div>
+  <div class="hunt-row">
+    <div class="hunt-input-wrap">
+      <div class="hunt-icon">🔍</div>
+      <input type="text" id="searchInput" placeholder="Player name or card details..." />
+    </div>
+    <button class="hunt-btn" id="huntBtn">
+      <span>Hunt</span>
+    </button>
+  </div>
+  <div class="platform-row" id="platformRow"></div>
+</div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sb-title">Marketplaces</div>
+    <div class="sb-section" id="marketplaceList"></div>
+    
+    <div class="sb-section">
+      <div class="sb-item" onclick="launchHuntAll()">
+        <span>Hunt All Markets</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="content-top">
+      <div>
+        <div class="content-title" id="contentTitle">Baseball Cards</div>
+        <div class="content-sub" id="contentSub">Showing all available cards</div>
+      </div>
+      <select class="sort-sel" id="sortSelect">
+        <option value="newest">Newest</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+      </select>
+    </div>
+
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="grid" id="cardGrid"></div>
+    <div class="empty" id="emptyState" style="display:none;">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-h">No Cards Found</div>
+      <div class="empty-p">Try adjusting your search or filters</div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal">
+  <div class="modal">
+    <div class="m-head">
+      <h2 id="modalName" class="m-name"></h2>
+      <button class="m-close" onclick="document.getElementById('modal').classList.remove('open');">×</button>
+    </div>
+    <div class="m-body">
+      <div id="modalSub" class="m-sub"></div>
+      <div id="modalNote" class="m-note"></div>
+      <div class="m-price" id="modalPrice"></div>
+      <div class="m-range-note" id="modalRange"></div>
+      <div class="m-grid">
+        <div class="m-field">
+          <div class="m-field-label">Grade</div>
+          <div class="m-field-val" id="modalGrade">N/A</div>
+        </div>
+        <div class="m-field">
+          <div class="m-field-label">Year</div>
+          <div class="m-field-val" id="modalYear">N/A</div>
+        </div>
+      </div>
+      <div class="hunt-all-wrap">
+        <button class="hunt-all-big" id="modalHuntBtn">
+          Hunt Across Markets
+          <span>(opens in new tabs)</span>
+        </button>
+      </div>
+      <div class="m-links" id="marketLinks"></div>
+    </div>
+  </div>
+</div>
+
+<button class="scr-top" id="scrTop" onclick="window.scrollTo({top:0,behavior:'smooth'});">↑</button>
+<div class="launch-toast" id="launchToast">Launching searches...</div>
+
+<script>
+  // SAMPLE CARD DATA
+  const CARDS = [
+    { player: "Mickey Mantle", team: "Yankees", year: 1952, grade: "PSA 8", price: "$2.5M", range: "$2.2M - $3.0M", badges: ["1of1", "rc"], rarity: "legendary", hot: true, note: "One of the most valuable cards in existence" },
+    { player: "Willie Mays", team: "Giants", year: 1951, grade: "PSA 9", price: "$1.8M", range: "$1.5M - $2.0M", badges: ["ultra", "auto"], rarity: "ultra", note: "Exceptional grade for its age" },
+    { player: "Babe Ruth", team: "Red Sox", year: 1914, grade: "PWCC", price: "$750K", range: "$600K - $850K", badges: ["hot"], rarity: "legendary", hot: true },
+    { player: "Ted Williams", team: "Red Sox", year: 1939, grade: "CGC 6", price: "$125K", range: "$100K - $150K", badges: [], rarity: "rare" },
+    { player: "Stan The Man", team: "Cardinals", year: 1951, grade: "PSA 7", price: "$85K", range: "$75K - $95K", badges: ["psa"], rarity: "rare" },
+    { player: "Joe DiMaggio", team: "Yankees", year: 1936, grade: "VG", price: "$45K", range: "$38K - $52K", badges: ["vin"], rarity: "uncommon" },
+  ];
+
+  const PLATFORMS = [
+    { id: "ebay", name: "eBay", url: "ebay.com" },
+    { id: "comc", name: "COMC", url: "comc.com" },
+    { id: "goldin", name: "Goldin", url: "goldinauctions.com" },
+    { id: "pwcc", name: "PWCC", url: "pwccauctions.com" },
+    { id: "beckett", name: "Beckett", url: "beckett.com" },
+    { id: "psa", name: "PSA", url: "psacard.com" },
+    { id: "sold", name: "Recently Sold", url: "" },
+    { id: "myslabs", name: "MySlabs", url: "myslabs.com" },
+  ];
+
+  // RENDER MARKETPLACE LIST
+  function renderMarketplaces() {
+    const html = PLATFORMS.map(p => `
+      <div class="sb-item" onclick="filterByPlatform('${p.id}')">
+        <span>${p.name}</span>
+        <div class="sb-count" id="count-${p.id}">0</div>
+      </div>
+    `).join("");
+    document.getElementById("marketplaceList").innerHTML = html;
+  }
+
+  // RENDER FILTER PILLS
+  function renderFilters() {
+    const badges = ["1of1", "rc", "hot", "auto", "psa"];
+    const html = badges.map(b => `
+      <div class="f-pill" onclick="toggleFilter('${b}')" id="f-${b}">${b.toUpperCase()}</div>
+    `).join("");
+    document.getElementById("filterBar").innerHTML = html;
+  }
+
+  // RENDER CARDS
+  function renderCards(cards = CARDS) {
+    if (cards.length === 0) {
+      document.getElementById("cardGrid").innerHTML = "";
+      document.getElementById("emptyState").style.display = "block";
+      return;
+    }
+    document.getElementById("emptyState").style.display = "none";
+
+    const html = cards.map(card => `
+      <div class="bc ${card.hot ? "hot" : ""}" onclick="openModal(${CARDS.indexOf(card)})">
+        <div class="bc-banner">${card.year}</div>
+        <div class="bc-badges">
+          ${card.badges.map(b => `<span class="badge b-${b}">${b}</span>`).join("")}
+        </div>
+        <div class="rarity-tag r-${card.rarity}">${card.rarity}</div>
+        <div class="bc-body">
+          <div class="bc-player">${card.player}</div>
+          <div class="bc-info">${card.team} • ${card.year}</div>
+          <div class="bc-price-row">
+            <div class="bc-price">${card.price}</div>
+            <div class="bc-range">${card.range}</div>
+          </div>
+          <div class="bc-tags">
+            <div class="bc-tag">${card.grade}</div>
+          </div>
+          <div class="bc-actions">
+            <button class="bc-btn bc-hunt">Hunt</button>
+            <button class="bc-btn bc-detail">Details</button>
+          </div>
+        </div>
+      </div>
+    `).join("");
+
+    document.getElementById("cardGrid").innerHTML = html;
+  }
+
+  // OPEN MODAL
+      <div class="sb-item" onclick="filterByPlatform('${e.id}')">
+        <span>${e.name}</span>
+        <div class="sb-count" id="count-${e.id}">0</div>
+      </div>
+    `).join("");document.getElementById("marketplaceList").innerHTML=e}function renderFilters(){const e=["1of1","rc","hot","auto","psa"].map(e=>`
+      <div class="f-pill" onclick="toggleFilter('${e}')" id="f-${e}">${e.toUpperCase()}</div>
+    `).join("");document.getElementById("filterBar").innerHTML=e}function renderCards(e=CARDS){0===e.length?(document.getElementById("cardGrid").innerHTML="",document.getElementById("emptyState").style.display="block"):(document.getElementById("emptyState").style.display="none",document.getElementById("cardGrid").innerHTML=e.map(e=>`
+      <div class="bc ${e.hot?"hot":""}" onclick="openModal(${CARDS.indexOf(e)})">
+        <div class="bc-banner">${e.year}</div>
+        <div class="bc-badges">
+          ${e.badges.map(e=>`<span class="badge b-${e}">${e}</span>`).join("")}
+        </div>
+        <div class="rarity-tag r-${e.rarity}">${e.rarity}</div>
+        <div class="bc-body">
+          <div class="bc-player">${e.player}</div>
+          <div class="bc-info">${e.team} • ${e.year}</div>
+          <div class="bc-price-row">
+            <div class="bc-price">${e.price}</div>
+            <div class="bc-range">${e.range}</div>
+          </div>
+          <div class="bc-tags">
+            <div class="bc-tag">${e.grade}</div>
+          </div>
+          <div class="bc-actions">
+            <button class="bc-btn bc-hunt">Hunt</button>
+            <button class="bc-btn bc-detail">Details</button>
+          </div>
+        </div>
+      </div>
+    `).join(""))}function openModal(e){const t=CARDS[e];document.getElementById("modalName").textContent=t.player,document.getElementById("modalSub").textContent=`${t.team} • ${t.year}`,document.getElementById("modalNote").textContent=t.note||"No additional notes available",document.getElementById("modalPrice").textContent=t.price,document.getElementById("modalRange").textContent=`Estimated range: ${t.range}`,document.getElementById("modalGrade").textContent=t.grade,document.getElementById("modalYear").textContent=t.year;const a=PLATFORMS.map(e=>e.url?`<a href="https://${e.url}?q=${t.player}" target="_blank" class="m-link ml-${e.id}">${e.name}</a>`:"").join("");document.getElementById("marketLinks").innerHTML=a,document.getElementById("modal").classList.add("open")}function launchHuntAll(){const e=document.getElementById("searchInput").value||"baseball cards";PLATFORMS.forEach(t=>{t.url&&window.open(`https://${t.url}?q=${e}`,"_blank")}),showToast("Launching on 7 platforms...")}function showToast(e){const t=document.getElementById("launchToast");t.textContent=e,t.classList.add("show"),setTimeout(()=>t.classList.remove("show"),2e3)}function filterByPlatform(e){console.log(`Filter by ${e}`)}function toggleFilter(e){document.getElementById(`f-${e}`).classList.toggle("on")}window.addEventListener("scroll",()=>{document.getElementById("scrTop").classList.toggle("vis",window.scrollY>300)}),renderMarketplaces(),renderFilters(),renderCards(CARDS);</script></body></html>
