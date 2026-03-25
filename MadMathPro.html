@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MadMath Pro — NFL Analytics Engine</title>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #111318;
+      --card: #161b22;
+      --border: #21262d;
+      --accent: #e8393a;
+      --accent2: #f97316;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --gold: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #0a0c10 0%, #1a0505 50%, #0a0c10 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
